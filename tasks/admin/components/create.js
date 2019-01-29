@@ -22,7 +22,6 @@ var
   del             = require('del'),
   fs              = require('fs'),
   path            = require('path'),
-  runSequence     = require('run-sequence'),
 
   // admin dependencies
   concatFileNames = require('gulp-concat-filenames'),
@@ -50,8 +49,7 @@ var
 module.exports = function(callback) {
   var
     stream,
-    index,
-    tasks = []
+    index
   ;
 
   for(index in release.components) {
@@ -307,25 +305,21 @@ module.exports = function(callback) {
         ;
       });
 
-
-      // synchronous tasks in orchestrator? I think not
-      gulp.task(task.all, false, function(callback) {
-        runSequence([
-          task.repo,
-          task.npm,
-          task.bower,
-          task.readme,
-          task.package,
-          task.composer,
-          task.notes,
-          task.meteor
-        ], callback);
-      });
-
-      tasks.push(task.all);
+      (gulp.task(task.all, gulp.series(
+        task.repo,
+        task.npm,
+        task.bower,
+        task.readme,
+        task.package,
+        task.composer,
+        task.notes,
+        task.meteor,
+        function(done) {
+          callback();
+          done();
+        }
+      )))();
 
     })(component);
   }
-
-  runSequence(tasks, callback);
 };
